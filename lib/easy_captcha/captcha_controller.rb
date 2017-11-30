@@ -5,10 +5,14 @@ module EasyCaptcha
     # captcha action send the generated image to browser
     def captcha
       if params[:format] == "wav" and EasyCaptcha.espeak?
-        send_data generate_speech_captcha, :disposition => 'inline', :type => 'audio/wav'
+        data = generate_speech_captcha
+        t = 'audio/wav'
       else
-        send_data generate_captcha, :disposition => 'inline', :type => 'image/png'
+        data = generate_captcha
+        t = 'image/png'
       end
+      $redis.setex("captcha:#{params[:k]}", 3.minutes.to_i, session[:captcha]) if params[:k].present?
+      send_data data, :disposition => 'inline', :type => t
     end
 
     private
